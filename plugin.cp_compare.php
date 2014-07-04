@@ -1,6 +1,6 @@
 <?php
 /*****************************************************************************************
-plugin cp_compare.php
+plugin cp_compare.php v3
 widget for showing local sector-times
 
 @author doe-eye alias d4u alias aca78
