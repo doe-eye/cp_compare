@@ -128,7 +128,7 @@ class CpCompare{
 		$xml .= '<label posn="'.($this->settings->rec->posn->x + 0.5) .' '.($this->settings->rec->posn->y + $this->settings->lineHeight).' '.$this->settings->rec->posn->z.'" ';
 		$xml .= 'valign="'.$this->settings->rec->valign.'" halign="'.$this->settings->rec->halign.'" ';
 		$xml .= 'sizen="'.$this->settings->rec->width.' '.$this->settings->lineHeight.'" textsize="'.$this->settings->rec->textsize.'" ';
-		$xml .= 'textcolor="'.$this->settings->headline->textcolor.'" text="'.$this->settings->headline->rec.'" />';
+		$xml .= 'textcolor="'.$this->settings->headline->textColor.'" text="'.$this->settings->headline->rec.'" />';
 		
 		//data
 		$xml .= '<quad posn="'.$this->settings->data->posn->x .' '.($this->settings->rec->posn->y + $this->settings->lineHeight).' '.$this->settings->data->posn->z.'" ';
@@ -138,7 +138,7 @@ class CpCompare{
 		$xml .= '<label posn="'.($this->settings->data->posn->x + 0.5) .' '.($this->settings->rec->posn->y + $this->settings->lineHeight).' '.$this->settings->data->posn->z.'" ';
 		$xml .= 'valign="'.$this->settings->data->valign.'" halign="'.$this->settings->data->halign.'" ';
 		$xml .= 'sizen="'.$this->settings->data->width.' '.$this->settings->lineHeight.'" textsize="'.$this->settings->data->textsize.'" ';
-		$xml .= 'textcolor="'.$this->settings->headline->textcolor.'" text="'.$this->settings->headline->data.'" />';
+		$xml .= 'textcolor="'.$this->settings->headline->textColor.'" text="'.$this->settings->headline->data.'" />';
 		
 		//name
 		$xml .= '<quad posn="'.$this->settings->names->posn->x.' '.($this->settings->rec->posn->y + $this->settings->lineHeight).' '.$this->settings->names->posn->z.'" ';
@@ -148,7 +148,7 @@ class CpCompare{
 		$xml .= '<label posn="'.($this->settings->names->posn->x + 0.5).' '.($this->settings->rec->posn->y + $this->settings->lineHeight).' '.$this->settings->names->posn->z.'" ';
 		$xml .= 'valign="'.$this->settings->names->valign.'" halign="'.$this->settings->names->halign.'" ';
 		$xml .= 'sizen="'.$this->settings->names->width.' '.$this->settings->lineHeight.'" textsize="'.$this->settings->names->textsize.'" ';
-		$xml .= 'textcolor="'.$this->settings->headline->textcolor.'" text="'.$this->settings->headline->name.'" />';
+		$xml .= 'textcolor="'.$this->settings->headline->textColor.'" text="'.$this->settings->headline->name.'" />';
 		
 //***********************************************************************************************************************************************************************
 	
