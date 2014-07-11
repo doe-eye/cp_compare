@@ -3,7 +3,7 @@
 plugin.cp_compare.php
 widget for showing local sector-times
 
-@version 4.0a
+@version 4.2a
 @author aca
 some code taken and adapted from already existing cp-plugins
 (e.g. spykeallcps, best_cp_times, personal_best_cps)
@@ -11,19 +11,20 @@ some code taken and adapted from already existing cp-plugins
 ******************************************************************************************/
 
 
-Aseco::registerEvent ( 'onStartup', 'cpc_startup' );//$aseco
+Aseco::registerEvent ('onStartup', 'cpc_startup');//$aseco
 
 Aseco::registerEvent('onPlayerConnect', 'cpc_playerConnect');//$aseco, $player
 Aseco::registerEvent('onPlayerDisconnect', 'cpc_playerDisconnect');//$aseco, $player
 Aseco::registerEvent('onPlayerInfoChanged', 'cpc_playerInfoChanged');//$aseco, $changes
 
-Aseco::registerEvent ( 'onBeginMap', 'cpc_beginMap' );//$aseco, $map
+Aseco::registerEvent ('onBeginMap', 'cpc_beginMap');//$aseco, $map
+Aseco::registerEvent ('onBeginRound', 'cpc_beginRound');//$aseco
 
-Aseco::registerEvent ( 'onLocalRecord', 'cpc_localRecord' );//$aseco, $record
-Aseco::registerEvent ( 'onPlayerFinish', 'cpc_playerFinish' );//$aseco, $record
-Aseco::registerEvent ( 'onCheckpoint', 'cpc_checkpoint' );//$aseco, $command
+Aseco::registerEvent ('onLocalRecord', 'cpc_localRecord');//$aseco, $record
+Aseco::registerEvent ('onPlayerFinish', 'cpc_playerFinish');//$aseco, $record
+Aseco::registerEvent ('onCheckpoint', 'cpc_checkpoint');//$aseco, $command
 
-Aseco::registerEvent ( 'onEndRound', 'cpc_endRound' );//$aseco
+Aseco::registerEvent ('onEndMap', 'cpc_endMap');//$aseco, $map
 
 
 
@@ -90,7 +91,7 @@ function cpc_playerInfoChanged ($aseco, $changes){
 	elseif (isset($clc->specArray[$login])){
 		unset($clc->specArray[$login]);
 		//show own widget
-		$aseco->client->query("SendDisplayManialinkPageToLogin", $spectatorLogin, $cpc->xmlArray[$spectatorLogin], 0, false);
+		$aseco->client->query("SendDisplayManialinkPageToLogin", $login, $cpc->xmlArray[$login], 0, false);
 	}
 
 }
@@ -100,6 +101,17 @@ function cpc_beginMap($aseco, $map){
 	$cpc->finishCp = $map->nbchecks-1;
 	$cpc->fetch_data($aseco);
 }
+
+function cpc_beginRound($aseco){
+	global $cpc;
+	$cpc->fetch_data($aseco);
+	
+	//show cp-widget
+	foreach($cpc->xmlArray as $login => $xml){
+		$aseco->client->query("SendDisplayManialinkPageToLogin", $login, $xml, 0, false);	
+	}	
+}
+
 
 function cpc_localRecord($aseco, $record){
 	global $cpc;
@@ -118,8 +130,10 @@ function cpc_playerFinish($aseco, $command){
 			$recTime = $cpc->localsLogins[$login]['cps'][$cpc->finishCp];
 		}
 		
+		//reset widget to starting-position
 		$cpc->fetch_data($aseco);
 		$cpc->show_widget($aseco, $login, $recTime, $cpc->finishCp);
+		
 		//also show to spectators
 		foreach ($cpc->specArray as $spectator => $spectated){
 			if($spectated == $login){
@@ -148,7 +162,7 @@ function cpc_checkpoint($aseco, $command){
 }
 
 
-function cpc_endRound($aseco){
+function cpc_endMap($aseco, $map){
 	global $cpc;
 	$cpc->hide_widget($aseco);
 }
