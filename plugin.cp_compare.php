@@ -3,7 +3,7 @@
 plugin.cp_compare.php
 widget for showing local sector-times
 
-@version 4.4
+@version 4.5
 @author aca
 some code taken and adapted from already existing cp-plugins
 (e.g. spykeallcps, best_cp_times, personal_best_cps)
@@ -33,6 +33,8 @@ global $cpc;
 function cpc_startup($aseco){
 	global $cpc;
 	$cpc = new CpCompare();
+	$cpc->fetch_data($aseco);
+	
 }
 
 function cpc_playerConnect($aseco, $player){
@@ -73,7 +75,6 @@ function cpc_playerInfoChanged ($aseco, $changes){
 				$pID = $player['PlayerId'];
 				if($pID == $spectatedID){
 					$spectatedLogin = $player['Login'];
-					break;
 				}
 			}			
 			$cpc->specArray[$spectatorLogin] = $spectatedLogin;
@@ -88,8 +89,8 @@ function cpc_playerInfoChanged ($aseco, $changes){
 		}
 	}
 	//if status changed from spectator to player
-	elseif (isset($clc->specArray[$login])){
-		unset($clc->specArray[$login]);
+	elseif (isset($cpc->specArray[$login])){
+		unset($cpc->specArray[$login]);
 		//show own widget
 		$aseco->client->query("SendDisplayManialinkPageToLogin", $login, $cpc->xmlArray[$login], 0, false);
 	}
@@ -99,27 +100,21 @@ function cpc_playerInfoChanged ($aseco, $changes){
 function cpc_beginMap($aseco, $map){
 	global $cpc;
 	$cpc->finishCp = $map->nbchecks-1;
-	$cpc->fetch_data($aseco);
 	
-	//show cp-widget
+	
+	//show cp-widget from memory
 	foreach($cpc->xmlArray as $login => $xml){
-		$recTime = '';
-		//if player is already in local records
-		if(isset($cpc->localsLogins[$login])){
-			$recTime = $cpc->localsLogins[$login]['cps'][$cpc->finishCp];
-		}
-		$cpc->show_widget($aseco, $login, $recTime, $cpc->finishCp);
-	}	
+		$aseco->client->query("SendDisplayManialinkPageToLogin", $login, $xml, 0, false);	
+	}
 	
 }
 
 function cpc_beginRound($aseco){
-	global $cpc;
-	$cpc->fetch_data($aseco);	
+	global $cpc;	
 	
 	//re-update widget at rounds-begin
 	if($aseco->server->gameinfo->mode == '1'){
-		//show cp-widget
+		//show cp-widget from memory
 		foreach($cpc->xmlArray as $login => $xml){
 			$aseco->client->query("SendDisplayManialinkPageToLogin", $login, $xml, 0, false);	
 		}		
@@ -137,16 +132,9 @@ function cpc_playerFinish($aseco, $command){
 	if($command->score == 0){
 		global $cpc;
 		$login = $command->player->login;
-		$recTime = '';
 		
-		//if player is already in local records
-		if(isset($cpc->localsLogins[$login])){
-			$recTime = $cpc->localsLogins[$login]['cps'][$cpc->finishCp];
-		}
-		
-		//reset widget to starting-position
-		$cpc->fetch_data($aseco);
-		$cpc->show_widget($aseco, $login, $recTime, $cpc->finishCp);
+		//show cp-widget from memory
+		$aseco->client->query("SendDisplayManialinkPageToLogin", $login, $cpc->xmlArray[$login], 0, false);
 		
 		//also show to spectators
 		foreach ($cpc->specArray as $spectator => $spectated){
@@ -164,7 +152,6 @@ function cpc_checkpoint($aseco, $command){
 	$time = $command[2];
 	$cp = $command[4];	
 
-	$cpc->fetch_data($aseco);
 	$cpc->show_widget($aseco, $login, $time, $cp);
 	
 	//also show to spectators
@@ -213,6 +200,7 @@ class CpCompare{
 		$this->finishTimes = array();
 		$this->specArray = array();
 		$this->xmlArray = array();
+		
 	}
 	
 	
