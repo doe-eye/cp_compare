@@ -120,6 +120,12 @@ function cpc_playerFinish($aseco, $command){
 		
 		$cpc->fetch_data($aseco);
 		$cpc->show_widget($aseco, $login, $recTime, $cpc->finishCp);
+		//also show to spectators
+		foreach ($cpc->specArray as $spectator => $spectated){
+			if($spectated == $login){
+				$aseco->client->query("SendDisplayManialinkPageToLogin", $spectator, $cpc->xmlArray[$spectated], 0, false);
+			}
+		}
 	}	
 }
 
