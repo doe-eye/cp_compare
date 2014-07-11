@@ -3,7 +3,7 @@
 plugin.cp_compare.php
 widget for showing local sector-times
 
-@version 4.5
+@version 4.5.1
 @author aca
 some code taken and adapted from already existing cp-plugins
 (e.g. spykeallcps, best_cp_times, personal_best_cps)
@@ -100,12 +100,17 @@ function cpc_playerInfoChanged ($aseco, $changes){
 function cpc_beginMap($aseco, $map){
 	global $cpc;
 	$cpc->finishCp = $map->nbchecks-1;
+	$cpc->fetch_data($aseco);
 	
-	
-	//show cp-widget from memory
-	foreach($cpc->xmlArray as $login => $xml){
-		$aseco->client->query("SendDisplayManialinkPageToLogin", $login, $xml, 0, false);	
-	}
+	//show cp-widget
+	 foreach($cpc->xmlArray as $login => $xml){
+		$recTime = '';
+		//if player is already in local records
+		if(isset($cpc->localsLogins[$login])){
+			$recTime = $cpc->localsLogins[$login]['cps'][$cpc->finishCp];
+		}
+		$cpc->show_widget($aseco, $login, $recTime, $cpc->finishCp);
+	} 
 	
 }
 
@@ -132,9 +137,12 @@ function cpc_playerFinish($aseco, $command){
 	if($command->score == 0){
 		global $cpc;
 		$login = $command->player->login;
-		
-		//show cp-widget from memory
-		$aseco->client->query("SendDisplayManialinkPageToLogin", $login, $cpc->xmlArray[$login], 0, false);
+		$recTime = '';
+		//if player is already in local records
+		if(isset($cpc->localsLogins[$login])){
+			$recTime = $cpc->localsLogins[$login]['cps'][$cpc->finishCp];
+		}
+		$cpc->show_widget($aseco, $login, $recTime, $cpc->finishCp);
 		
 		//also show to spectators
 		foreach ($cpc->specArray as $spectator => $spectated){
