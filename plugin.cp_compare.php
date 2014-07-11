@@ -3,7 +3,7 @@
 plugin.cp_compare.php
 widget for showing local sector-times
 
-@version 4.2
+@version 4.3
 @author aca
 some code taken and adapted from already existing cp-plugins
 (e.g. spykeallcps, best_cp_times, personal_best_cps)
@@ -100,16 +100,28 @@ function cpc_beginMap($aseco, $map){
 	global $cpc;
 	$cpc->finishCp = $map->nbchecks-1;
 	$cpc->fetch_data($aseco);
+	
+	//show cp-widget
+	foreach($cpc->xmlArray as $login => $xml){
+		$recTime = '';
+		//if player is already in local records
+		if(isset($cpc->localsLogins[$login])){
+			$recTime = $cpc->localsLogins[$login]['cps'][$cpc->finishCp];
+		}
+		$cpc->show_widget($aseco, $login, $recTime, $cpc->finishCp);
+	}	
+	
 }
 
 function cpc_beginRound($aseco){
 	global $cpc;
-	$cpc->fetch_data($aseco);
+	$cpc->fetch_data($aseco);	
 	
 	//show cp-widget
 	foreach($cpc->xmlArray as $login => $xml){
 		$aseco->client->query("SendDisplayManialinkPageToLogin", $login, $xml, 0, false);	
-	}	
+	}		
+
 }
 
 
