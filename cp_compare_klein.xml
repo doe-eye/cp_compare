@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<settings>
+
+	<positive_cp_color>f00</positive_cp_color>
+	<negative_cp_color>00f</negative_cp_color>
+	<lineHeight>3</lineHeight>
+
+	<widget_frame>
+		<posn>
+			<x>-20</x>
+			<y>-57</y>
+			<z>20</z>
+		</posn>
+		<scale>0.8</scale>
+	</widget_frame>
+	
+<!-- headline titles -->
+	<headline>
+		<textColor>ffff</textColor>
+		<rec>rec</rec>
+		<data>mySectorTime</data>
+		<name>player</name>
+	</headline>
+	
+	
+	
+<!-- bgcolors for lines -->
+	<headlineColor>7771</headlineColor>
+	<firstColor>fff1</firstColor>
+	<beforeMeColor>ccc1</beforeMeColor>
+	<meColor>fff1</meColor>
+
+
+<!-- entries for column 'rec' -->
+	<recColor>0f0f</recColor>
+	<rec>
+		<textsize>0.8</textsize>
+		<valign>center</valign>
+		<halign>left</halign>
+		<posn>
+			<x>1</x>
+			<y>0</y> <!-- lineHeight is added automatically-->
+			<z>0.2</z>
+		</posn>
+		<width>5.5</width>
+	</rec>
+
+	
+	
+<!-- entries for column 'data' (= time)-->
+	<data>
+		<textsize>0.8</textsize>
+		<valign>center</valign>
+		<halign>left</halign>
+		<posn>
+			<x>7</x>
+			<y>0</y> <!-- lineHeight is added automatically-->
+			<z>0.2</z>
+		</posn>
+		<width>14.5</width>
+	</data>
+	
+	
+<!-- entries for column 'name' -->
+	<names>
+		<textsize>0.6</textsize>
+		<valign>center</valign>
+		<halign>left</halign>
+		<posn>
+			<x>22</x>
+			<y>0</y> <!-- lineHeight is added automatically-->
+			<z>0.2</z>
+		</posn>
+		<width>27</width>
+	</names>
+</settings>
