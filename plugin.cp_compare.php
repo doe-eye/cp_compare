@@ -3,7 +3,7 @@
 plugin.cp_compare.php
 widget for showing local sector-times
 
-@version 4.5.1
+@version 4.6
 @author aca
 some code taken and adapted from already existing cp-plugins
 (e.g. spykeallcps, best_cp_times, personal_best_cps)
@@ -30,6 +30,7 @@ Aseco::registerEvent ('onEndMap', 'cpc_endMap');//$aseco, $map
 
 global $cpc;
 
+//xaseco2-EVENT onStartup
 function cpc_startup($aseco){
 	global $cpc;
 	$cpc = new CpCompare();
@@ -37,6 +38,7 @@ function cpc_startup($aseco){
 	
 }
 
+//xaseco2-EVENT onPlyerConnect
 function cpc_playerConnect($aseco, $player){
 	global $cpc;
 	$recTime = '';
@@ -47,12 +49,16 @@ function cpc_playerConnect($aseco, $player){
 	$cpc->show_widget($aseco, $player->login, $recTime, $cpc->finishCp);
 }
 
+
+//xaseco2-EVENT onPlayerDisconnect
 function cpc_playerDisconnect($aseco, $player){
 	global $cpc;
 	unset($cpc->xmlArray[$player->login]);
 	unset($cpc->specArray[$player->login]);
 }
 
+
+//xaseco2-EVENT onPlayerInfoChanged
 function cpc_playerInfoChanged ($aseco, $changes){
 	global $cpc;
 	$login = $changes['Login'];
@@ -83,10 +89,12 @@ function cpc_playerInfoChanged ($aseco, $changes){
 			$aseco->client->query("SendDisplayManialinkPageToLogin", $spectatorLogin, $cpc->xmlArray[$spectatedLogin], 0, false);
 		}
 		else{//is free-spec
-			unset($cpc->specArray[$spectatorLogin]);
+			$spectatedLogin = 'freeSpec';
+			$cpc->specArray[$spectatorLogin] = $spectatedLogin;
 			//don't show the widget
 			$cpc->hide_widget($aseco, $spectatorLogin);
 		}
+		
 	}
 	//if status changed from spectator to player
 	elseif (isset($cpc->specArray[$login])){
@@ -95,25 +103,37 @@ function cpc_playerInfoChanged ($aseco, $changes){
 		$aseco->client->query("SendDisplayManialinkPageToLogin", $login, $cpc->xmlArray[$login], 0, false);
 	}
 
-}
+}//end xaseco2-EVENT onPlayerInfoChanged
 
+
+//xaseco2-EVENT onBeginMap
 function cpc_beginMap($aseco, $map){
 	global $cpc;
 	$cpc->finishCp = $map->nbchecks-1;
 	$cpc->fetch_data($aseco);
 	
-	//show cp-widget
-	 foreach($cpc->xmlArray as $login => $xml){
+	//fetch all players
+	$aseco->client->query('GetPlayerList',254,0);//max number of infos, starting-index
+	$playerList = $aseco->client->getResponse();
+	
+	//show cp-widget to all players
+	foreach($playerList as $player){
+		$login = $player['Login'];
 		$recTime = '';
 		//if player is already in local records
 		if(isset($cpc->localsLogins[$login])){
 			$recTime = $cpc->localsLogins[$login]['cps'][$cpc->finishCp];
 		}
 		$cpc->show_widget($aseco, $login, $recTime, $cpc->finishCp);
-	} 
-	
+	}
+
+	//update for spectators -> show widget of spectated
+	foreach($cpc->specArray as $spectator => $spectated){
+		$aseco->client->query("SendDisplayManialinkPageToLogin", $spectator, $cpc->xmlArray[$spectated], 0, false);
+	}
 }
 
+//xaseco2-EVENT onBeginRound
 function cpc_beginRound($aseco){
 	global $cpc;	
 	
@@ -126,12 +146,14 @@ function cpc_beginRound($aseco){
 	}
 }
 
-
+//xaseco2-EVENT onLocalRecord
 function cpc_localRecord($aseco, $record){
 	global $cpc;
 	$cpc->fetch_data($aseco);
 }
 
+
+//xaseco2-EVENT onPlayerFinish
 function cpc_playerFinish($aseco, $command){
  	//when no "real" finish but a restart
 	if($command->score == 0){
@@ -151,8 +173,9 @@ function cpc_playerFinish($aseco, $command){
 			}
 		}
 	}	
-}
+}//end xaseco2-EVENT onPlayerFinish
 
+//xaseco2-EVENT onCheckpoint
 function cpc_checkpoint($aseco, $command){
 	global $cpc;
 	
@@ -168,9 +191,9 @@ function cpc_checkpoint($aseco, $command){
 			$aseco->client->query("SendDisplayManialinkPageToLogin", $spectator, $cpc->xmlArray[$spectated], 0, false);
 		}
 	}
-}
+}//end xaseco2-EVENT onCheckpoint
 
-
+//EVENT onEndMap
 function cpc_endMap($aseco, $map){
 	global $cpc;
 	$cpc->hide_widget($aseco);
@@ -181,38 +204,45 @@ function cpc_endMap($aseco, $map){
 
 
 class CpCompare{
+	//array with all players in it, that currently spectate
 	public $specArray;//['spectatorLogin'] = spectatedLogin
+	
+	//array with the current widgetXMLs of all players
 	public $xmlArray;//['login'] = currentWidgetXML
 	
 	//array with local records, key is login
 	public $localsLogins; //locals['login']['rank']; locals ['login']['nick']; locals ['login']['cps']
 
-	public $finishCp;
+	public $finishCp;//number of cps of the map - 1 (that is the cp-id of finishCp)
 	
-	private $settings;
+	private $settings;//settings of the configuration XML-file (cp_compare.xml)
 	private $recCount;//number of local records
-	private $first; //first['login']; first['cps'];	
+	
+	//array with data of the first of the locals
+	private $first; //first['login'] = login; first['cps'][no] = sectortimeOfCpNo;	
 	
 	//array that stores for each lap the finish-time (key is login)
 	//used for work-around when in laps-mode
 	private $finishTimes;//finishTimes[login][lap] = time	
 	
 	//array with local records, key is rank
-	private $localsRanked; //locals[rank]['login']; locals[rank]['nick']; locals[rank]['cps']
+	private $localsRanked; //locals[rank]['login'] = login; locals[rank]['nick'] = nick; locals[rank]['cps'][no] = sectortimeOfCpNo
 	
 	
-	
+	//initializing constructor
 	function CpCompare(){
 		$this->settings = simplexml_load_file('cp_compare.xml');
 		setCustomUIField('checkpoint_list', false);
 		$this->finishTimes = array();
 		$this->specArray = array();
 		$this->xmlArray = array();
+		//wenn free-spec, kein widget anzeigen
+		$this->xmlArray['freeSpec'] = '<?xml version="1.0" encoding="UTF-8"?><manialink id="cp_compare2"></manialink>';
 		
-	}
+	}//end CPCompare()
 	
-	
-	function formatTime($ms) {
+	//formats parameter milliseconds for view in widget
+	private function formatTime($ms) {
 		$minutes = $ms / 60000;
 		
 		$seconds = ($ms % 60000 )/ 1000;
@@ -221,10 +251,10 @@ class CpCompare{
 		$res = sprintf('%02d:%02d.%03d', $minutes, $seconds, $tseconds);
 	
 		return $res;
-	}
+	}//end formatTime($ms)
 	
-	
-	function getXML($first, $beforeMe, $me, $myRank, $logins){
+	//fetches the XML for the personal widget
+	private function getXML($first, $beforeMe, $me, $myRank, $logins){
 		$xml  = '<?xml version="1.0" encoding="UTF-8"?>';
 		$xml .= '<manialink id="cp_compare2" version="1" timeout="0">';
 		
@@ -369,8 +399,9 @@ class CpCompare{
 		
 		return $xml;
 		
-	}
+	}//end getXML($first, $beforeMe, $me, $myRank, $logins)
 
+	//fetches the current local records information
 	//sets localsRanked, localsLogins and first-array
 	function fetch_data($aseco){
 		unset($this->first);
@@ -407,8 +438,9 @@ class CpCompare{
 			$this->first = $locals1[1];
 		}
 		
-	}
+	}//end fetch_data($aseco)
 
+	//shows the personal widget to specified $login
 	function show_widget($aseco, $login, $time, $cp){
 		$first = '';
 		$beforeMe = '';
@@ -418,8 +450,7 @@ class CpCompare{
 			"first" => '',
 			"beforeMe" => '',
 			"me" => ''.$aseco->server->players->getPlayer($login)->nickname);
-
-			
+	
 		if($time != ''){
 			//gamemode Laps->adjust cp-count and cp-time
 			if($aseco->server->gameinfo->mode == '4'){
@@ -527,22 +558,23 @@ class CpCompare{
 		$this->xmlArray[$login] = $xml;
 		
 		$aseco->client->query("SendDisplayManialinkPageToLogin", $login, $xml, 0, false);
-		
-		
-	}
+			
+	}//end show_widget($aseco, $login, $time, $cp)
 
-
+	//hides either the widget for all players
+	//or hides the widget for a specified player
 	function hide_widget($aseco, $login=null){
 		$xml  = '<?xml version="1.0" encoding="UTF-8"?>';
 		$xml .= '<manialink id="cp_compare2"></manialink>';
 	
 		if($login != null){
+			$this->xmlArray[$login] = $xml;
 			$aseco->client->query("SendDisplayManialinkPageToLogin", $login, $xml, 0, false);
 		}
 		else{
 			$aseco->client->query ( "SendDisplayManialinkPage", $xml, 0, false );
 		}
-	}
+	}//end hide_widget($aseco, $login=null)
 }
 
 
