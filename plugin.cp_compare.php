@@ -3,7 +3,7 @@
 plugin.cp_compare.php
 widget for showing local sector-times
 
-@version 4.6
+@version 4.6.1
 @author aca
 some code taken and adapted from already existing cp-plugins
 (e.g. spykeallcps, best_cp_times, personal_best_cps)
@@ -110,6 +110,12 @@ function cpc_playerInfoChanged ($aseco, $changes){
 function cpc_beginMap($aseco, $map){
 	global $cpc;
 	$cpc->finishCp = $map->nbchecks-1;
+
+}
+
+//xaseco2-EVENT onBeginRound
+function cpc_beginRound($aseco){
+	global $cpc;	
 	$cpc->fetch_data($aseco);
 	
 	//fetch all players
@@ -133,19 +139,6 @@ function cpc_beginMap($aseco, $map){
 	}
 }
 
-//xaseco2-EVENT onBeginRound
-function cpc_beginRound($aseco){
-	global $cpc;	
-	
-	//re-update widget at rounds-begin
-	if($aseco->server->gameinfo->mode == '1'){
-		//show cp-widget from memory
-		foreach($cpc->xmlArray as $login => $xml){
-			$aseco->client->query("SendDisplayManialinkPageToLogin", $login, $xml, 0, false);	
-		}		
-	}
-}
-
 //xaseco2-EVENT onLocalRecord
 function cpc_localRecord($aseco, $record){
 	global $cpc;
@@ -155,8 +148,8 @@ function cpc_localRecord($aseco, $record){
 
 //xaseco2-EVENT onPlayerFinish
 function cpc_playerFinish($aseco, $command){
- 	//when no "real" finish but a restart
-	if($command->score == 0){
+ 	//when no "real" finish but a restart in TA
+	if($command->score == 0 && $aseco->server->gameinfo->mode == '2'){
 		global $cpc;
 		$login = $command->player->login;
 		$recTime = '';
@@ -236,7 +229,7 @@ class CpCompare{
 		$this->finishTimes = array();
 		$this->specArray = array();
 		$this->xmlArray = array();
-		//wenn free-spec, kein widget anzeigen
+		//if free-spec, don't show widget
 		$this->xmlArray['freeSpec'] = '<?xml version="1.0" encoding="UTF-8"?><manialink id="cp_compare2"></manialink>';
 		
 	}//end CPCompare()
